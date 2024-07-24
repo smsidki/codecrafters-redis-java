@@ -8,7 +8,7 @@ public class Main {
     System.out.println("Logs from your program will appear here!");
 
     //  Uncomment this block to pass the first stage
-    ServerSocket serverSocket = null;
+    ServerSocket serverSocket;
     Socket clientSocket = null;
     int port = 6379;
     try {
