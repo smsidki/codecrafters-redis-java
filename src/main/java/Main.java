@@ -37,8 +37,14 @@ public class Main {
       }));
 
       while (running[0]) {
-        selector.select(5000);
-        for (var key : selector.selectedKeys()) {
+        if (selector.select(5_000) == 0) {
+          continue;
+        }
+
+        var keys = selector.selectedKeys();
+        var iterator = keys.iterator();
+        while (iterator.hasNext()) {
+          var key = iterator.next();
           if (key.isAcceptable()) {
             var clientCh = serverCh.accept();
             if (clientCh != null) {
@@ -85,6 +91,7 @@ public class Main {
             }
           }
         }
+        iterator.remove();
       }
     } catch (IOException e) {
       System.err.println("Failed to open selector: " + e.getMessage());
