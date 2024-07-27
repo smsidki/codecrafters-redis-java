@@ -1,3 +1,5 @@
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -7,11 +9,12 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 
+@Slf4j
 public class Main {
 
   public static void main(String[] args) {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
-    System.out.println("Logs from your program will appear here!");
+    log.info("Logs from your program will appear here!");
 
     var port = 6379;
     var running = new boolean[]{true};
@@ -26,13 +29,13 @@ public class Main {
 
       var mainThread = Thread.currentThread();
       Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-        System.out.println("Shutting down");
+        log.debug("Shutting down");
         running[0] = false;
         try {
           mainThread.join();
-          System.out.println("Shut down complete");
+          log.debug("Shut down complete");
         } catch (InterruptedException e) {
-          System.err.println("Main thread interrupted! " + e.getMessage());
+          log.error("Main thread interrupted!", e);
         }
       }));
 
@@ -50,7 +53,7 @@ public class Main {
             if (clientCh != null) {
               clientCh.configureBlocking(false);
               clientCh.register(selector, SelectionKey.OP_READ);
-              System.out.println("Client connected! " + clientCh.getRemoteAddress());
+              log.debug("Client connected! {}", clientCh.getRemoteAddress());
             }
           } else if (key.isReadable()) {
             try {
@@ -60,12 +63,12 @@ public class Main {
               if (bytesRead == -1) {
                 var clientAddr = clientCh.getRemoteAddress();
                 clientCh.close();
-                System.out.println("Client disconnected! " + clientAddr);
+                log.debug("Client disconnected! {}", clientAddr);
               } else {
                 buffer.flip();
                 var cmd = StandardCharsets.UTF_8.decode(buffer).toString().trim();
                 buffer.clear();
-                System.out.println("Command: " + cmd);
+                log.debug("Command: {}", cmd);
 
                 buffer.put("+PONG\r\n".getBytes(StandardCharsets.UTF_8));
                 buffer.flip();
@@ -75,17 +78,13 @@ public class Main {
                 buffer.clear();
               }
             } catch (Exception e) {
-              System.err.println("Fail processing request: " + e.getMessage());
-              //noinspection CallToPrintStackTrace
-              e.printStackTrace();
+              log.error("Fail processing request", e);
               //noinspection resource
               if (key.channel() != null) {
                 try {
                   key.channel().close();
                 } catch (Exception ex) {
-                  System.err.println("Fail closing channel: " + ex.getMessage());
-                  //noinspection CallToPrintStackTrace
-                  ex.printStackTrace();
+                  log.error("Fail closing channel", ex);
                 }
               }
             }
@@ -94,9 +93,7 @@ public class Main {
         iterator.remove();
       }
     } catch (IOException e) {
-      System.err.println("Failed to open selector: " + e.getMessage());
-      //noinspection CallToPrintStackTrace
-      e.printStackTrace();
+      log.error("Failed to open selector", e);
     }
   }
 
