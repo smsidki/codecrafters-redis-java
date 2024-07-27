@@ -42,7 +42,7 @@ public class Main {
           if (key.isAcceptable()) {
             var clientCh = serverCh.accept();
             if (clientCh != null) {
-              clientCh.configureBlocking(true);
+              clientCh.configureBlocking(false);
               clientCh.register(selector, SelectionKey.OP_READ);
               System.out.println("Client connected! " + clientCh.getRemoteAddress());
             }
@@ -66,6 +66,7 @@ public class Main {
                 while (buffer.hasRemaining()) {
                   clientCh.write(buffer);
                 }
+                buffer.clear();
               }
             } catch (Exception e) {
               System.err.println("Fail processing request: " + e.getMessage());
