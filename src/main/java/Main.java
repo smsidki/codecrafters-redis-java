@@ -1,20 +1,13 @@
-import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.Charset;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
 
 public class Main {
-
-  static final String CH_TYPE = "channelType";
-  static final String CLIENT_CH = "clientChannel";
-  static final String SERVER_CH = "serverChannel";
 
   public static void main(String[] args) {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
@@ -23,33 +16,28 @@ public class Main {
     var port = 6379;
     var running = new boolean[]{true};
 
-    var mainThread = Thread.currentThread();
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      running[0] = false;
-      try {
-        mainThread.join();
-      } catch (InterruptedException e) {
-        System.err.println("Main thread interrupted!" + e.getMessage());
-      }
-    }));
+    try (
+      var selector = Selector.open();
+      var serverCh = ServerSocketChannel.open()
+    ) {
+      serverCh.configureBlocking(false);
+      serverCh.bind(new InetSocketAddress(port));
+      serverCh.register(selector, SelectionKey.OP_ACCEPT);
 
-    var selectorRef = (Selector) null;
-    var chRef = (ServerSocketChannel) null;
-    try {
-      final var ch = chRef = ServerSocketChannel.open();
-      Runtime.getRuntime().addShutdownHook(new Thread(() -> close(ch)));
-
-      ch.bind(new InetSocketAddress(port));
-      ch.configureBlocking(false);
-
-      final var selector = selectorRef = Selector.open();
-      Runtime.getRuntime().addShutdownHook(new Thread(() -> close(selector)));
-
-      var serverSelectionKey = ch.register(selector, SelectionKey.OP_ACCEPT);
-      serverSelectionKey.attach(Map.of(CH_TYPE, SERVER_CH));
+      var mainThread = Thread.currentThread();
+      Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+        System.out.println("Shutting down");
+        running[0] = false;
+        try {
+          mainThread.join();
+          System.out.println("Shut down complete");
+        } catch (InterruptedException e) {
+          System.err.println("Main thread interrupted! " + e.getMessage());
+        }
+      }));
 
       while (running[0]) {
-        if (selector.select() == 0) {
+        if (selector.select(5000) == 0) {
           continue;
         }
 
@@ -57,58 +45,35 @@ public class Main {
         var iterator = keys.iterator();
         while (iterator.hasNext()) {
           var key = iterator.next();
-          if (isServerCh(key)) {
-            //noinspection resource
-            var serverCh = (ServerSocketChannel) key.channel();
-            var clientCh = (SocketChannel) serverCh.accept();
-            if (clientCh != null) {
-              clientCh.configureBlocking(false);
-              var clientKey = clientCh.register(selector, SelectionKey.OP_READ, SelectionKey.OP_WRITE);
-              clientKey.attach(Map.of(CH_TYPE, CLIENT_CH));
-
-              var buffer = CharBuffer.wrap("+PONG\r\n");
-              while (buffer.hasRemaining()) {
-                clientCh.write(Charset.defaultCharset().encode(buffer));
-              }
-              buffer.clear();
-            }
-          } else {
+          if (key.isAcceptable()) {
+            var clientCh = serverCh.accept();
+            clientCh.configureBlocking(false);
+            clientCh.register(selector, SelectionKey.OP_READ);
+            System.out.println("Client connected! " + clientCh.getRemoteAddress());
+          } else if (key.isReadable()) {
             var clientCh = (SocketChannel) key.channel();
-            var buffer = ByteBuffer.allocate(20);
-            var bytesRead = 0;
-            if (key.isReadable()) {
-              if ((bytesRead = clientCh.read(buffer)) > 0) {
-                buffer.flip();
-                System.out.println("Buffer: " + Charset.defaultCharset().decode(buffer));
-                buffer.clear();
-              }
-              if (bytesRead < 0) {
-                clientCh.close();
-              }
+            var buffer = ByteBuffer.allocate(30);
+            var bytesRead = clientCh.read(buffer);
+            if (bytesRead == -1) {
+              var clientAddr = clientCh.getRemoteAddress();
+              clientCh.close();
+              System.out.println("Client disconnected! " + clientAddr);
+            } else {
+              buffer.flip();
+              var cmd = StandardCharsets.UTF_8.decode(buffer).toString().trim();
+              buffer.clear();
+              System.out.println("Command: " + cmd);
+
+              buffer.put("+PONG\r\n".getBytes(StandardCharsets.UTF_8));
+              buffer.flip();
+              clientCh.write(buffer);
             }
           }
         }
         iterator.remove();
       }
-    } catch (IOException ex) {
-      System.err.println("Could not open server socket! " + ex.getMessage());
-    } finally {
-      close(selectorRef);
-      close(chRef);
-    }
-  }
-
-  static boolean isServerCh(SelectionKey key) {
-    return SERVER_CH.equals(((Map<?, ?>) key.attachment()).get(CH_TYPE));
-  }
-
-  static void close(Closeable closeable) {
-    if (closeable != null) {
-      try {
-        closeable.close();
-      } catch (Exception e) {
-        System.err.println("Could not close server socket! " + e.getMessage());
-      }
+    } catch (IOException e) {
+      System.err.println("Failed to open selector: " + e.getMessage());
     }
   }
 
