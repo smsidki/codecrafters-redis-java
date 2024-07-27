@@ -42,7 +42,7 @@ public class Main {
           if (key.isAcceptable()) {
             var clientCh = serverCh.accept();
             if (clientCh != null) {
-              clientCh.configureBlocking(false);
+              clientCh.configureBlocking(true);
               clientCh.register(selector, SelectionKey.OP_READ);
               System.out.println("Client connected! " + clientCh.getRemoteAddress());
             }
