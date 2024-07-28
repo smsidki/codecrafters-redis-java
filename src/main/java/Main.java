@@ -1,3 +1,4 @@
+import command.Request;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -66,11 +67,15 @@ public class Main {
                 log.debug("Client disconnected! {}", clientAddr);
               } else {
                 buffer.flip();
-                var cmd = StandardCharsets.UTF_8.decode(buffer).toString().trim();
+                var requestLine = StandardCharsets.UTF_8.decode(buffer).toString().trim();
                 buffer.clear();
-                log.debug("Command: {}", cmd);
+                log.debug("Request line: {}", requestLine);
+                var request = Request.builder().reqLine(requestLine).build();
 
-                buffer.put("+PONG\r\n".getBytes(StandardCharsets.UTF_8));
+                var response = request.executeCommands();
+                if (response.length != 0) {
+                  buffer.put(response);
+                }
                 buffer.flip();
                 while (buffer.hasRemaining()) {
                   clientCh.write(buffer);
