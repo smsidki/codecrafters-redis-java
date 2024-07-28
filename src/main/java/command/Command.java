@@ -2,6 +2,7 @@ package command;
 
 import lombok.Builder;
 import memory.KV;
+import memory.ServerInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +44,7 @@ public class Command {
       case "INFO" -> {
         return Response.builder()
           .dataType(DataType.BULK_STRINGS)
-          .text("role:master")
+          .text("role:%s".formatted(ServerInfo.getInstance().getRole()))
           .build();
       }
       case "SET" -> {
