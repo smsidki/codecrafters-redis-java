@@ -10,7 +10,7 @@ import java.util.Objects;
 public class Command {
 
   public static final List<String> COMMAND_NAMES = List.of(
-    "COMMAND", "DOCS", "PING", "ECHO", "SET", "GET"
+    "COMMAND", "DOCS", "PING", "ECHO", "SET", "GET", "INFO"
   );
 
   private final String name;
