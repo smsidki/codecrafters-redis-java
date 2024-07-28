@@ -22,7 +22,13 @@ public enum DataType {
   BULK_STRINGS("Aggregate", "$") {
     @Override
     public byte[] toBytes(String text, Charset charset) {
-      return "%s%d\r\n%s\r\n".formatted(this.getFirstByte(), text.length(), text).getBytes(charset);
+      var length = -1;
+      var content = "";
+      if (text != null && !text.isEmpty()) {
+        length = text.length();
+        content = "%s\r\n".formatted(text);
+      }
+      return "%s%d\r\n%s".formatted(this.getFirstByte(), length, content).getBytes(charset);
     }
   };
 

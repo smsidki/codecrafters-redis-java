@@ -59,7 +59,7 @@ public class Main {
           } else if (key.isReadable()) {
             try {
               var clientCh = (SocketChannel) key.channel();
-              var buffer = ByteBuffer.allocate(30);
+              var buffer = ByteBuffer.allocate(1024);
               var bytesRead = clientCh.read(buffer);
               if (bytesRead == -1) {
                 var clientAddr = clientCh.getRemoteAddress();
