@@ -34,6 +34,8 @@ public class Main {
     var port = cli.hasOption("p") ? Integer.parseInt(cli.getOptionValue("p")) : 6379;
     var replica = cli.getOptionValue("r");
     if (replica == null) {
+      ServerInfo.getInstance().setRole("master");
+    } else {
       ServerInfo.getInstance().setRole("slave");
     }
 
