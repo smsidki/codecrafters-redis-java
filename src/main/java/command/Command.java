@@ -44,7 +44,11 @@ public class Command {
       case "INFO" -> {
         return Response.builder()
           .dataType(DataType.BULK_STRINGS)
-          .text("role:%s".formatted(ServerInfo.getInstance().getRole()))
+          .text("role:%smaster_replid:%smaster_repl_offset:%d".formatted(
+            ServerInfo.getInstance().getRole(),
+            ServerInfo.getInstance().getReplicationId(),
+            ServerInfo.getInstance().getReplicationOffset()
+          ))
           .build();
       }
       case "SET" -> {
