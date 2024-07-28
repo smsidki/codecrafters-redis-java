@@ -40,6 +40,12 @@ public class Command {
           .text(String.join(" ", this.arguments))
           .build();
       }
+      case "INFO" -> {
+        return Response.builder()
+          .dataType(DataType.BULK_STRINGS)
+          .text("role:master")
+          .build();
+      }
       case "SET" -> {
         var cmd = new CmdSet(arguments);
         return Response.builder()
