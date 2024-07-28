@@ -41,10 +41,10 @@ public class Command {
           .build();
       }
       case "SET" -> {
-        KV.set(this.arguments.get(0), this.arguments.get(1));
+        var cmd = new CmdSet(arguments);
         return Response.builder()
           .dataType(DataType.SIMPLE_STRINGS)
-          .text("OK")
+          .text(cmd.execute())
           .build();
       }
       case "GET" -> {
