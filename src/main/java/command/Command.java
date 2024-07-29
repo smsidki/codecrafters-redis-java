@@ -45,9 +45,9 @@ public class Command {
         return Response.builder()
           .dataType(DataType.BULK_STRINGS)
           .text("role:%smaster_replid:%smaster_repl_offset:%d".formatted(
-            ServerInfo.getInstance().getRole(),
-            ServerInfo.getInstance().getReplicationId(),
-            ServerInfo.getInstance().getReplicationOffset()
+            ServerInfo.role(),
+            ServerInfo.masterReplID(),
+            ServerInfo.masterReplOffset()
           ))
           .build();
       }

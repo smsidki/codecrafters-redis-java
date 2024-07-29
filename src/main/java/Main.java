@@ -25,10 +25,13 @@ public class Main {
     var port = cli.hasOption("p") ? Integer.parseInt(cli.getOptionValue("p")) : 6379;
     var replica = cli.getOptionValue("r");
     if (replica == null) {
-      ServerInfo.getInstance().setRole("master");
+      ServerInfo.role("master");
     } else {
-      ServerInfo.getInstance().setRole("slave");
+      ServerInfo.role("slave");
     }
+
+    ServerInfo.masterReplOffset(0);
+    ServerInfo.masterReplID("8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb");
 
     try(var server = new Server()) {
       server.listen(port);

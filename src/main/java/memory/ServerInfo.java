@@ -3,28 +3,37 @@ package memory;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Getter
 @Setter
 public final class ServerInfo {
 
-  private static ServerInfo INSTANCE;
+  private static final Map<String, Object> STATISTIC = new HashMap<>();
 
-  private String role;
-  private String replicationId;
-  private long replicationOffset;
-
-  private ServerInfo() {}
-
-  public static ServerInfo getInstance() {
-    if (INSTANCE == null) {
-      INSTANCE = new ServerInfo();
-      INSTANCE.setReplicationOffset(0L);
-      INSTANCE.setReplicationId("8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb");
-    }
-    return INSTANCE;
+  public static void role(String role) {
+    STATISTIC.put("role", role);
   }
 
+  public static String role() {
+    return (String) STATISTIC.get("role");
+  }
 
+  public static void masterReplID(String masterReplID) {
+    STATISTIC.put("master_replid", masterReplID);
+  }
 
+  public static String masterReplID() {
+    return (String) STATISTIC.get("master_replid");
+  }
+
+  public static void masterReplOffset(int masterReplOffset) {
+    STATISTIC.put("master_repl_offset", masterReplOffset);
+  }
+
+  public static int masterReplOffset() {
+    return (Integer) STATISTIC.get("master_repl_offset");
+  }
 
 }
