@@ -16,12 +16,13 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 public class Server implements Closeable {
 
-
+  private final Object lock;
   private boolean listening;
   public Thread serverThread;
 
   public Server() {
     this.listening = false;
+    this.lock = new Object();
   }
 
   public void listen(int port) {
@@ -100,17 +101,23 @@ public class Server implements Closeable {
   }
 
   public void close() {
-    try {
-      if (this.listening) {
-        log.debug("Closing server");
-        this.listening = false;
+    var waitServerThread = false;
+    synchronized (lock) {
+        if (this.listening) {
+          log.debug("Closing server");
+          this.listening = false;
+          waitServerThread = true;
+        } else {
+          log.debug("Server already closed");
+        }
+    }
+    if (waitServerThread) {
+      try {
         this.serverThread.join();
         log.debug("Server closed");
-      } else {
-        log.debug("Server already closed");
+      } catch (InterruptedException e) {
+        log.error("Error closing server: {}", e.getMessage(), e);
       }
-    } catch (InterruptedException e) {
-      log.error("Error closing server: {}", e.getMessage(), e);
     }
   }
 
