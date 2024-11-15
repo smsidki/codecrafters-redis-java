@@ -11,7 +11,7 @@ import java.util.Objects;
 public class Command {
 
   public static final List<String> COMMAND_NAMES = List.of(
-    "COMMAND", "DOCS", "PING", "ECHO", "SET", "GET", "INFO"
+    "COMMAND", "DOCS", "PING", "ECHO", "SET", "GET", "INFO", "HELLO"
   );
 
   private final String name;
@@ -49,6 +49,12 @@ public class Command {
             ServerInfo.masterReplID(),
             ServerInfo.masterReplOffset()
           ))
+          .build();
+      }
+      case "HELLO" -> {
+        return Response.builder()
+          .dataType(DataType.BULK_STRINGS)
+          .text("server:redis")
           .build();
       }
       case "SET" -> {
